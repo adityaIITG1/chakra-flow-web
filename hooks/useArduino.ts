@@ -124,7 +124,7 @@ export function useArduino() {
 
             const textDecoder = new TextDecoderStream();
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const readableStreamClosed = port.readable!.pipeTo(textDecoder.writable);
+            const readableStreamClosed = port.readable!.pipeTo(textDecoder.writable as unknown as WritableStream<Uint8Array>);
             const reader = textDecoder.readable.getReader();
             readerRef.current = reader;
             isReadingRef.current = true;
