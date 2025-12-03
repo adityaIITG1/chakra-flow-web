@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useVisionModels } from "@/hooks/useVisionModels";
 import { useVoiceAssistant } from "@/hooks/useVoiceAssistant";
+import { useArduino } from "@/hooks/useArduino";
 import {
     classifyGesture,
     detectNamaste,
@@ -19,12 +20,14 @@ import TopBar from "./TopBar";
 import RightSidebar from "./RightSidebar";
 import LeftSidebar from "./LeftSidebar";
 import BottomOverlay from "./BottomOverlay";
+import BioAnalyticsPanel from "./BioAnalyticsPanel";
 
 export default function YogaCanvas() {
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const { handLandmarker, faceLandmarker, isLoading, error: aiError } = useVisionModels();
     const { isListening, isSpeaking, toggleListening } = useVoiceAssistant();
+    const { arduinoData, connectArduino, arduinoError } = useArduino();
 
     // Ref to track isSpeaking without triggering re-renders in the animation loop
     const isSpeakingRef = useRef(isSpeaking);
@@ -101,7 +104,10 @@ export default function YogaCanvas() {
             setTimeout(() => addLog(`AI Error: ${aiError}`), 0);
             hasErrorRef.current = true;
         }
-    }, [isLoading, handLandmarker, faceLandmarker, aiError]);
+        if (arduinoError) {
+            setTimeout(() => addLog(`Sensor Error: ${arduinoError}`), 0);
+        }
+    }, [isLoading, handLandmarker, faceLandmarker, aiError, arduinoError]);
 
     useEffect(() => {
         audioRef.current = new Audio("/adiyogi.mp3");
@@ -460,8 +466,8 @@ export default function YogaCanvas() {
                 </div>
             </div>
 
-            {/* Voice Toggle (Top Right - Floating Glass) */}
-            <div className="absolute top-6 right-8 z-40">
+            {/* Voice Toggle & Arduino Connect (Top Right - Floating Glass) */}
+            <div className="absolute top-6 right-8 z-40 flex flex-col gap-3 items-end">
                 <button
                     onClick={toggleListening}
                     className={`
@@ -487,6 +493,46 @@ export default function YogaCanvas() {
                         </>
                     )}
                 </button>
+
+                {/* Arduino Connect Button */}
+                <button
+                    onClick={connectArduino}
+                    className={`
+                        px-5 py-2.5 rounded-full backdrop-blur-xl border transition-all duration-300 flex items-center gap-3 shadow-lg
+                        ${arduinoData.isConnected
+                            ? "bg-green-500/20 border-green-500/50 text-green-400 shadow-[0_0_20px_rgba(34,197,94,0.3)]"
+                            : "bg-blue-500/10 border-blue-500/30 text-blue-300 hover:bg-blue-500/20 hover:border-blue-500/50"
+                        }
+                    `}
+                >
+                    {arduinoData.isConnected ? (
+                        <>
+                            <span className="relative flex h-3 w-3">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                            </span>
+                            <span className="font-medium text-sm tracking-wide">Sensor Active</span>
+                        </>
+                    ) : (
+                        <>
+                            <span className="text-lg">🔌</span>
+                            <span className="font-medium text-sm tracking-wide">Connect Sensor</span>
+                        </>
+                    )}
+                </button>
+            </div>
+
+            {/* Bio Analytics Panel (Floating Left-Center) */}
+            <div className="absolute top-24 left-36 z-30">
+                <BioAnalyticsPanel
+                    heartRate={arduinoData.heartRate}
+                    spo2={arduinoData.spo2}
+                    beatDetected={arduinoData.beatDetected}
+                    isConnected={arduinoData.isConnected}
+                    energyLevel={uiEnergies.reduce((a, b) => a + b, 0) / 7} // Avg Energy
+                    stressLevel={Math.max(0, 1 - (uiEnergies[3] || 0))} // Inverse of Heart Chakra? Or just mock based on HR
+                    focusScore={uiEnergies[5] || 0.5} // Third Eye
+                />
             </div>
 
             {!isPlaying && (
@@ -494,7 +540,7 @@ export default function YogaCanvas() {
                     <button
                         onClick={toggleAudio}
                         className="
-                            group relative px-10 py-5 bg-transparent overflow-hidden rounded-full 
+                            group relative px-10 py-5 bg-transparent overflow-hidden rounded-full
                             border border-green-500/50 text-white shadow-[0_0_40px_rgba(34,197,94,0.2)]
                             transition-all duration-500 hover:shadow-[0_0_60px_rgba(34,197,94,0.4)] hover:border-green-400
                         "
