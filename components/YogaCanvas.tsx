@@ -25,6 +25,7 @@ import BioAnalyticsPanel from "./BioAnalyticsPanel";
 export default function YogaCanvas() {
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const universeRef = useRef<HTMLCanvasElement>(null);
     const { handLandmarker, faceLandmarker, isLoading, error: aiError } = useVisionModels();
     const { isListening, isSpeaking, toggleListening } = useVoiceAssistant();
     const { arduinoData, connectArduino, arduinoError } = useArduino();
@@ -63,6 +64,8 @@ export default function YogaCanvas() {
     const [uiEnergies, setUiEnergies] = useState<number[]>([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]);
     const [sessionTime, setSessionTime] = useState("0.0 min");
     const [mood, setMood] = useState("Relaxed");
+    const [posture, setPosture] = useState("Good");
+    const [alignmentMode, setAlignmentMode] = useState("Standard");
 
     const addLog = (msg: string) => setLogs(prev => [...prev.slice(-4), msg]);
 
@@ -170,7 +173,7 @@ export default function YogaCanvas() {
             audioRef.current.play().then(() => {
                 setIsPlaying(true);
                 addLog("Audio: Playing");
-            }).catch(e => addLog(`Audio Error: ${e.message}`));
+            }).catch(e => addLog(`Audio Error: ${(e as Error).message}`));
         }
     };
 
@@ -441,8 +444,11 @@ export default function YogaCanvas() {
         return () => cancelAnimationFrame(requestRef.current);
     }, [handLandmarker, faceLandmarker]);
 
+    // Level Progress (Mock for now)
+    const levelProgress = 30; // 30%
+
     return (
-        <div className="relative w-full h-screen bg-[#0a0a0a] overflow-hidden flex flex-col font-sans selection:bg-green-500/30">
+        <div className="relative w-full h-screen bg-black overflow-hidden font-sans select-none">
             {isLoading && (
                 <div className="absolute z-50 top-0 left-0 w-full h-full bg-black/90 flex flex-col items-center justify-center gap-4">
                     <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
@@ -452,87 +458,94 @@ export default function YogaCanvas() {
                 </div>
             )}
 
-            {/* Indian Flag (Top Left - Floating) */}
-            <div className="absolute top-6 left-8 z-40 group cursor-default">
-                <div className="flex flex-col items-center transform transition-transform group-hover:scale-105 duration-300">
-                    <div className="w-12 h-3 bg-[#FF9933] rounded-t-sm shadow-sm"></div>
-                    <div className="w-12 h-3 bg-white flex items-center justify-center relative shadow-sm">
-                        <div className="w-2.5 h-2.5 rounded-full border-[1.5px] border-[#000080] flex items-center justify-center animate-spin-slow">
-                            <div className="w-0.5 h-0.5 bg-[#000080] rounded-full"></div>
-                        </div>
-                    </div>
-                    <div className="w-12 h-3 bg-[#138808] rounded-b-sm shadow-sm"></div>
-                    <div className="text-[8px] text-white/60 mt-1 font-bold tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-opacity">JAI HIND</div>
+            {/* Background: Universe/Nebula */}
+            <canvas
+                ref={universeRef}
+                className="absolute top-0 left-0 w-full h-full object-cover opacity-60"
+            />
+
+            {/* Video Feed */}
+            <video
+                ref={videoRef}
+                className="absolute top-0 left-0 w-full h-full object-cover opacity-90 mix-blend-screen"
+                autoPlay
+                playsInline
+                muted
+            />
+
+            {/* Overlays */}
+            <canvas
+                ref={canvasRef}
+                className="absolute top-0 left-0 w-full h-full pointer-events-none z-10"
+            />
+
+            {/* Top Bar (Session Info) */}
+            <TopBar
+                sessionTime={sessionTime}
+                mood={mood}
+                posture={posture}
+                alignmentMode={alignmentMode}
+            />
+
+            {/* Level Progress Bar (Top Right Center) */}
+            <div className="absolute top-24 right-80 w-64 z-20 pointer-events-none flex flex-col items-end">
+                <div className="flex justify-between items-end mb-1 w-full">
+                    <span className="text-yellow-400 font-bold text-3xl tracking-widest drop-shadow-[0_0_10px_rgba(234,179,8,0.8)] animate-pulse">LEVEL 3</span>
+                </div>
+                <div className="h-6 w-full bg-black/60 border-2 border-yellow-500 rounded-sm overflow-hidden shadow-[0_0_20px_rgba(234,179,8,0.5)] relative">
+                    <div className="h-full bg-gradient-to-r from-yellow-600 via-yellow-400 to-yellow-200" style={{ width: `${levelProgress}%` }}></div>
+                    {/* Scanline effect */}
+                    <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.3)_50%)] bg-[length:4px_4px] pointer-events-none"></div>
+                </div>
+
+                {/* Mudra Required Warning */}
+                <div className="mt-2 bg-red-600/90 border-2 border-red-500 text-white px-4 py-1 font-bold text-sm tracking-widest uppercase shadow-[0_0_20px_rgba(220,38,38,0.6)] animate-bounce">
+                    MUDRA REQUIRED TO PROGRESS!
                 </div>
             </div>
 
-            {/* Voice Toggle & Arduino Connect (Top Right - Floating Glass) */}
-            <div className="absolute top-6 right-8 z-40 flex flex-col gap-3 items-end">
-                <button
-                    onClick={toggleListening}
-                    className={`
-                        px-5 py-2.5 rounded-full backdrop-blur-xl border transition-all duration-300 flex items-center gap-3 shadow-lg
-                        ${isListening
-                            ? "bg-red-500/20 border-red-500/50 text-red-400 shadow-[0_0_20px_rgba(239,68,68,0.3)]"
-                            : "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-white/30"
-                        }
-                    `}
-                >
-                    {isListening ? (
-                        <>
-                            <span className="relative flex h-3 w-3">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                            </span>
-                            <span className="font-medium text-sm tracking-wide">Listening...</span>
-                        </>
-                    ) : (
-                        <>
-                            <span className="text-lg">🎙️</span>
-                            <span className="font-medium text-sm tracking-wide">Voice AI</span>
-                        </>
-                    )}
-                </button>
+            {/* Left Sidebar (Chakra Meters) */}
+            <LeftSidebar energies={uiEnergies} />
 
-                {/* Arduino Connect Button */}
-                <button
-                    onClick={connectArduino}
-                    className={`
-                        px-5 py-2.5 rounded-full backdrop-blur-xl border transition-all duration-300 flex items-center gap-3 shadow-lg
-                        ${arduinoData.isConnected
-                            ? "bg-green-500/20 border-green-500/50 text-green-400 shadow-[0_0_20px_rgba(34,197,94,0.3)]"
-                            : "bg-blue-500/10 border-blue-500/30 text-blue-300 hover:bg-blue-500/20 hover:border-blue-500/50"
-                        }
-                    `}
-                >
-                    {arduinoData.isConnected ? (
-                        <>
-                            <span className="relative flex h-3 w-3">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                            </span>
-                            <span className="font-medium text-sm tracking-wide">Sensor Active</span>
-                        </>
-                    ) : (
-                        <>
-                            <span className="text-lg">🔌</span>
-                            <span className="font-medium text-sm tracking-wide">Connect Sensor</span>
-                        </>
-                    )}
-                </button>
-            </div>
+            {/* Bio-Analytics Panel (Left Side, Next to Sidebar) */}
+            {arduinoData.isConnected && (
+                <div className="absolute top-32 left-32 z-20 animate-slide-in-left">
+                    <BioAnalyticsPanel
+                        heartRate={arduinoData.heartRate}
+                        spo2={arduinoData.spo2}
+                        beatDetected={arduinoData.beatDetected}
+                        energyLevel={uiEnergies[3]} // Heart Chakra Energy
+                        stressLevel={1.0 - (uiEnergies[6] || 0.5)} // Inverse of Crown
+                        focusScore={uiEnergies[5] || 0.5} // Third Eye
+                        isConnected={arduinoData.isConnected}
+                        hrvIndex={arduinoData.hrvIndex}
+                        doshas={arduinoData.doshas}
+                    />
+                </div>
+            )}
 
-            {/* Bio Analytics Panel (Floating Left-Center) */}
-            <div className="absolute top-24 left-36 z-30">
-                <BioAnalyticsPanel
-                    heartRate={arduinoData.heartRate}
-                    spo2={arduinoData.spo2}
-                    beatDetected={arduinoData.beatDetected}
-                    isConnected={arduinoData.isConnected}
-                    energyLevel={uiEnergies.reduce((a, b) => a + b, 0) / 7} // Avg Energy
-                    stressLevel={Math.max(0, 1 - (uiEnergies[3] || 0))} // Inverse of Heart Chakra? Or just mock based on HR
-                    focusScore={uiEnergies[5] || 0.5} // Third Eye
-                />
+            {/* Right Sidebar (Mudras & Guide) */}
+            <RightSidebar activeGesture={gesture} />
+
+            {/* Bottom Overlay (Feedback) */}
+            <BottomOverlay
+                feedback={feedback}
+                gesture={gesture}
+                logs={logs}
+            />
+
+            {/* Center Title & Hint Overlay */}
+            <div className="absolute bottom-12 left-1/2 -translate-x-1/2 text-center z-20 pointer-events-none">
+                <h1 className="text-yellow-400 font-bold text-3xl uppercase tracking-widest drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] mb-1">
+                    AI ChakraFlow
+                </h1>
+                <div className="text-yellow-200 text-sm font-mono tracking-wider uppercase mb-4">
+                    Meditation & Mudra Engine
+                </div>
+                <div className="bg-black/60 backdrop-blur-md border border-yellow-500/50 px-6 py-2 rounded-full inline-block shadow-[0_0_20px_rgba(234,179,8,0.3)]">
+                    <span className="text-yellow-300 font-bold">Hint: </span>
+                    <span className="text-white">Try Gyan Mudra for Crown Chakra</span>
+                </div>
             </div>
 
             {!isPlaying && (
@@ -554,43 +567,48 @@ export default function YogaCanvas() {
                 </div>
             )}
 
-            <TopBar
-                sessionTime={sessionTime}
-                mood={mood}
-            />
+            {/* Controls (Voice & Connect) */}
+            <div className="absolute bottom-8 right-8 flex flex-col gap-4 z-50">
+                {/* Connect Sensor Button */}
+                {!arduinoData.isConnected && (
+                    <button
+                        onClick={connectArduino}
+                        className="bg-black/60 backdrop-blur-md border border-green-500/50 text-green-400 px-4 py-3 rounded-full font-bold hover:bg-green-500/20 transition-all flex items-center gap-2 shadow-[0_0_15px_rgba(34,197,94,0.3)]"
+                    >
+                        <span>🔌</span>
+                        Connect Sensor
+                    </button>
+                )}
 
-            <div className="flex-1 flex relative z-10">
-                <LeftSidebar energies={uiEnergies} />
-
-                <div className="flex-1 relative flex items-center justify-center overflow-hidden">
-                    {/* Vignette Overlay */}
-                    <div className="absolute inset-0 z-20 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.4)_80%,rgba(0,0,0,0.8)_100%)]"></div>
-
-                    {/* Grid Overlay (Subtle) */}
-                    <div className="absolute inset-0 z-10 pointer-events-none opacity-[0.03]"
-                        style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
-                    </div>
-
-                    <video
-                        ref={videoRef}
-                        className="absolute w-full h-full object-cover opacity-0"
-                        playsInline
-                        muted
-                    />
-                    <canvas
-                        ref={canvasRef}
-                        className="w-full h-full object-cover"
-                    />
-                </div>
-
-                <RightSidebar activeGesture={gesture} />
+                {/* Voice Toggle */}
+                <button
+                    onClick={toggleListening}
+                    className={`
+                        w-16 h-16 rounded-full flex items-center justify-center backdrop-blur-md border-2 transition-all duration-500 shadow-[0_0_30px_rgba(0,0,0,0.5)]
+                        ${isListening
+                            ? "bg-green-500/20 border-green-400 text-green-400 animate-pulse shadow-[0_0_30px_rgba(74,222,128,0.4)]"
+                            : "bg-white/10 border-white/20 text-white/60 hover:bg-white/20 hover:scale-105"
+                        }
+                    `}
+                >
+                    {isListening ? (
+                        <div className="flex gap-1 items-center">
+                            <div className="w-1 h-4 bg-green-400 animate-[bounce_1s_infinite]"></div>
+                            <div className="w-1 h-6 bg-green-400 animate-[bounce_1.2s_infinite]"></div>
+                            <div className="w-1 h-4 bg-green-400 animate-[bounce_1s_infinite]"></div>
+                        </div>
+                    ) : (
+                        <span className="text-2xl">🎙️</span>
+                    )}
+                </button>
             </div>
 
-            <BottomOverlay
-                gesture={gesture}
-                feedback={feedback}
-                logs={logs}
-            />
+            {/* Error Toast */}
+            {arduinoError && (
+                <div className="absolute top-24 left-1/2 -translate-x-1/2 bg-red-500/90 text-white px-6 py-3 rounded-lg shadow-xl z-50 animate-bounce">
+                    ⚠️ {arduinoError}
+                </div>
+            )}
         </div>
     );
 }

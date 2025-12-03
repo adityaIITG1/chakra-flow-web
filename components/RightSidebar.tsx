@@ -18,6 +18,13 @@ export default function RightSidebar({ activeGesture }: RightSidebarProps) {
     return (
         <div className="absolute top-24 bottom-24 right-6 w-[280px] flex flex-col gap-4 z-20 pointer-events-none">
 
+            {/* Touch Nose Indicator (New) */}
+            <div className="bg-yellow-500/10 backdrop-blur-md border border-yellow-500/50 rounded-xl p-3 shadow-[0_0_15px_rgba(234,179,8,0.2)]">
+                <h3 className="text-yellow-400 font-bold text-xs uppercase tracking-widest mb-1">Touch Nose to Enable</h3>
+                <div className="text-[10px] text-yellow-200 font-mono">Breathing Exercise</div>
+                <div className="text-[9px] text-gray-400 mt-1">Touch Heart Sensor</div>
+            </div>
+
             {/* Header */}
             <div className="bg-black/80 backdrop-blur-xl border border-white/20 rounded-xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
                 <h2 className="text-white font-bold text-sm uppercase tracking-widest flex items-center gap-3">
@@ -25,7 +32,7 @@ export default function RightSidebar({ activeGesture }: RightSidebarProps) {
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
                     </span>
-                    Mudra Detection
+                    Mudra Guide
                 </h2>
             </div>
 

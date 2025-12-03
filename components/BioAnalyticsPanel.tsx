@@ -4,10 +4,12 @@ interface BioAnalyticsPanelProps {
     heartRate: number;
     spo2: number;
     beatDetected: boolean;
-    energyLevel: number; // 0.0 to 1.0
-    stressLevel: number; // 0.0 to 1.0 (derived from HRV/Focus)
-    focusScore: number; // 0.0 to 1.0
+    energyLevel: number;
+    stressLevel: number;
+    focusScore: number;
     isConnected: boolean;
+    hrvIndex: number;
+    doshas: { vata: number; pitta: number; kapha: number; };
 }
 
 export default function BioAnalyticsPanel({
@@ -17,7 +19,9 @@ export default function BioAnalyticsPanel({
     energyLevel,
     stressLevel,
     focusScore,
-    isConnected
+    isConnected,
+    hrvIndex,
+    doshas
 }: BioAnalyticsPanelProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -131,8 +135,8 @@ export default function BioAnalyticsPanel({
                 }
             };
 
-            const graphH = 60;
-            const gap = 10;
+            const graphH = 50; // Reduced height to fit more
+            const gap = 8;
             const startY = 10;
 
             drawGraph("HEART RHYTHM", pulseDataRef.current, 10, startY, w - 20, graphH, 'rgba(0, 255, 255, 1)', 'line');
@@ -150,7 +154,7 @@ export default function BioAnalyticsPanel({
     return (
         <div className="w-80 bg-black/90 backdrop-blur-xl border border-white/20 rounded-xl p-5 flex flex-col gap-4 shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
             <div className="flex justify-between items-center border-b border-white/10 pb-3">
-                <h3 className="text-green-400 font-mono tracking-widest text-sm font-bold">BIO-ANALYTICS</h3>
+                <h3 className="text-green-400 font-mono tracking-widest text-sm font-bold">BIO-ANALYTICS ENGINE</h3>
                 <div className={`w-2.5 h-2.5 rounded-full shadow-[0_0_10px_currentColor] ${isConnected ? 'bg-green-500 text-green-500 animate-pulse' : 'bg-red-500 text-red-500'}`}></div>
             </div>
 
@@ -163,7 +167,7 @@ export default function BioAnalyticsPanel({
                     </div>
                 </div>
                 <div className="bg-gray-900/80 p-3 rounded-lg border border-white/10 shadow-inner">
-                    <div className="text-[10px] text-gray-400 font-bold tracking-wider mb-1">SpO2</div>
+                    <div className="text-[10px] text-gray-400 font-bold tracking-wider mb-1">OXYGEN</div>
                     <div className="text-3xl font-bold text-blue-400 font-mono">{spo2}%</div>
                 </div>
             </div>
@@ -172,9 +176,48 @@ export default function BioAnalyticsPanel({
             <canvas
                 ref={canvasRef}
                 width={280}
-                height={300}
+                height={250}
                 className="w-full h-auto rounded-lg bg-black/40 border border-white/5"
             />
+
+            {/* Nadi Pariksha (Doshas) */}
+            <div className="bg-gray-900/80 p-3 rounded-lg border border-white/10">
+                <div className="text-[10px] text-gray-400 font-bold tracking-wider mb-2 uppercase">Nadi Pariksha (Doshas)</div>
+                <div className="flex flex-col gap-2">
+                    {/* Vata */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-yellow-200 w-8">Vata</span>
+                        <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-yellow-400" style={{ width: `${doshas.vata * 100}%` }}></div>
+                        </div>
+                    </div>
+                    {/* Pitta */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-red-200 w-8">Pitta</span>
+                        <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-red-500" style={{ width: `${doshas.pitta * 100}%` }}></div>
+                        </div>
+                    </div>
+                    {/* Kapha */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-blue-200 w-8">Kapha</span>
+                        <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-400" style={{ width: `${doshas.kapha * 100}%` }}></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* HRV Index */}
+            <div className="bg-gray-900/80 p-2 rounded-lg border border-white/10 flex justify-between items-center">
+                <span className="text-[10px] text-gray-400 font-bold tracking-wider">HRV INDEX</span>
+                <span className="text-sm font-mono text-green-400">{hrvIndex} ms</span>
+            </div>
+
+            {/* Status Footer */}
+            <div className="text-[10px] text-gray-500 text-center font-mono">
+                {isConnected ? "Scanning bio-rhythms..." : "Waiting for Sensor..."}
+            </div>
         </div>
     );
 }

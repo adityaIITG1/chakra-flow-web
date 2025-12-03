@@ -3,9 +3,11 @@ import React from "react";
 interface TopBarProps {
     sessionTime: string;
     mood: string;
+    posture?: string;
+    alignmentMode?: string;
 }
 
-export default function TopBar({ sessionTime, mood }: TopBarProps) {
+export default function TopBar({ sessionTime, mood, posture = "Good", alignmentMode = "Standard" }: TopBarProps) {
     return (
         <div className="absolute top-0 left-0 w-full z-30 flex justify-center pt-4 pointer-events-none">
             <div className="
@@ -36,8 +38,18 @@ export default function TopBar({ sessionTime, mood }: TopBarProps) {
 
                 <div className="flex items-center gap-2">
                     <span className="text-gray-400 uppercase text-xs">Posture</span>
-                    <span className="text-green-400">Active Tracking</span>
+                    <span className={`text-${posture === "Good" ? "green" : "red"}-400`}>{posture}</span>
                 </div>
+
+                {alignmentMode && (
+                    <>
+                        <div className="w-px h-4 bg-white/20"></div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-gray-400 uppercase text-xs">Mode</span>
+                            <span className="text-blue-300">{alignmentMode}</span>
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );
