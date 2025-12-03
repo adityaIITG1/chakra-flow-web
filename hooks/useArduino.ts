@@ -278,7 +278,13 @@ export function useArduino() {
             readLoop();
         } catch (err) {
             console.error("Error connecting to Arduino:", err);
-            setError(err instanceof Error ? err.message : String(err));
+            const msg = err instanceof Error ? err.message : String(err);
+
+            // Ignore "No port selected" error (User cancelled)
+            if (!msg.includes("No port selected")) {
+                setError(msg);
+            }
+
             setData(prev => ({ ...prev, isConnected: false }));
         }
     }, [readLoop]);
