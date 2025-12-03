@@ -112,6 +112,24 @@ export default function YogaCanvas() {
             utterance.rate = 1.15; // Teez (Fast/Energetic)
             utterance.pitch = 1.1; // Saaf (Clear/Natural)
             utterance.volume = 1.0; // Loud (Max Volume)
+
+            // Audio Ducking
+            if (audioRef.current) {
+                audioRef.current.volume = 0.1; // Lower volume
+            }
+
+            utterance.onend = () => {
+                if (audioRef.current && isPlaying) {
+                    audioRef.current.volume = 0.6; // Restore volume
+                }
+            };
+
+            utterance.onerror = () => {
+                if (audioRef.current && isPlaying) {
+                    audioRef.current.volume = 0.6; // Restore volume on error
+                }
+            };
+
             window.speechSynthesis.speak(utterance);
         }
     };
@@ -196,10 +214,24 @@ export default function YogaCanvas() {
         } else {
             audioRef.current.play().then(() => {
                 setIsPlaying(true);
+                audioRef.current!.volume = 0.6; // Reset volume on play
                 addLog("Audio: Playing");
             }).catch(e => addLog(`Audio Error: ${(e as Error).message}`));
         }
     };
+
+    // Audio Ducking for Intro (from Hook)
+    const { isSpeaking: isAssistantSpeaking } = useVoiceAssistant();
+
+    useEffect(() => {
+        if (audioRef.current && isPlaying) {
+            if (isAssistantSpeaking) {
+                audioRef.current.volume = 0.1; // Duck
+            } else {
+                audioRef.current.volume = 0.6; // Restore
+            }
+        }
+    }, [isAssistantSpeaking, isPlaying]);
 
     const takeScreenshot = async () => {
         const now = Date.now();

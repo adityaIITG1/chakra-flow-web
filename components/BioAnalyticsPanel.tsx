@@ -29,6 +29,32 @@ export default function BioAnalyticsPanel({
 }: BioAnalyticsPanelProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
+    // Data Refs (for performance)
+    const heartRateRef = useRef(heartRate);
+    const spo2Ref = useRef(spo2);
+    const beatDetectedRef = useRef(beatDetected);
+    const energyLevelRef = useRef(energyLevel);
+    const stressLevelRef = useRef(stressLevel);
+    const focusScoreRef = useRef(focusScore);
+    const hrvIndexRef = useRef(hrvIndex);
+    const doshasRef = useRef(doshas);
+    const insightTextRef = useRef(insightText);
+    const findingRef = useRef(finding);
+
+    // Update refs when props change
+    useEffect(() => {
+        heartRateRef.current = heartRate;
+        spo2Ref.current = spo2;
+        beatDetectedRef.current = beatDetected;
+        energyLevelRef.current = energyLevel;
+        stressLevelRef.current = stressLevel;
+        focusScoreRef.current = focusScore;
+        hrvIndexRef.current = hrvIndex;
+        doshasRef.current = doshas;
+        insightTextRef.current = insightText;
+        findingRef.current = finding;
+    }, [heartRate, spo2, beatDetected, energyLevel, stressLevel, focusScore, hrvIndex, doshas, insightText, finding]);
+
     // Animation Refs
     const pulseDataRef = useRef<number[]>(new Array(100).fill(0));
     const hrvDataRef = useRef<number[]>(new Array(50).fill(0));
@@ -67,7 +93,7 @@ export default function BioAnalyticsPanel({
             // --- UPDATE DATA ---
 
             // 1. Pulse (ECG)
-            if (beatDetected) {
+            if (beatDetectedRef.current) {
                 pulseDataRef.current.push(-0.5, 1.0, -0.2); // Beat spike
             } else {
                 pulseDataRef.current.push(Math.random() * 0.05 - 0.025); // Noise
@@ -75,30 +101,30 @@ export default function BioAnalyticsPanel({
             while (pulseDataRef.current.length > 100) pulseDataRef.current.shift();
 
             // 2. HRV (Stress Bars)
-            const stressNoise = Math.random() * stressLevel;
+            const stressNoise = Math.random() * stressLevelRef.current;
             hrvDataRef.current.push(stressNoise);
             while (hrvDataRef.current.length > 50) hrvDataRef.current.shift();
 
             // 3. Prana (Energy Wave)
             const breath = Math.sin(phaseRef.current * 0.2) * 0.1;
-            pranaDataRef.current.push(energyLevel + breath);
+            pranaDataRef.current.push(energyLevelRef.current + breath);
             while (pranaDataRef.current.length > 100) pranaDataRef.current.shift();
 
             // 4. Focus (Beam)
-            const wobble = (1.0 - focusScore) * 0.2;
+            const wobble = (1.0 - focusScoreRef.current) * 0.2;
             const focusVal = 0.5 + Math.sin(phaseRef.current * 0.5) * wobble + (Math.random() - 0.5) * wobble;
             focusDataRef.current.push(focusVal);
             while (focusDataRef.current.length > 100) focusDataRef.current.shift();
 
             // 5. HRV Index
-            hrvIndexDataRef.current.push(Math.min(1, Math.max(0, (hrvIndex - 20) / 80)));
+            hrvIndexDataRef.current.push(Math.min(1, Math.max(0, (hrvIndexRef.current - 20) / 80)));
             while (hrvIndexDataRef.current.length > 100) hrvIndexDataRef.current.shift();
 
             // 6. Dosha History
-            if (doshas) {
-                vataHistoryRef.current.push(doshas.vata);
-                pittaHistoryRef.current.push(doshas.pitta);
-                kaphaHistoryRef.current.push(doshas.kapha);
+            if (doshasRef.current) {
+                vataHistoryRef.current.push(doshasRef.current.vata);
+                pittaHistoryRef.current.push(doshasRef.current.pitta);
+                kaphaHistoryRef.current.push(doshasRef.current.kapha);
                 if (vataHistoryRef.current.length > 20) vataHistoryRef.current.shift();
                 if (pittaHistoryRef.current.length > 20) pittaHistoryRef.current.shift();
                 if (kaphaHistoryRef.current.length > 20) kaphaHistoryRef.current.shift();
@@ -190,10 +216,10 @@ export default function BioAnalyticsPanel({
                 }
             };
 
-            const graphH = 55; // Increased height
-            const gap = 12; // Increased gap
-            const startY = 140; // Moved up
-            const panelW = 480; // Increased width
+            const graphH = 50; // Slightly reduced height to fit
+            const gap = 10; // Slightly reduced gap
+            const startY = 130; // Moved up slightly
+            const panelW = 480;
             const graphW = panelW - 40;
             const graphX = 20;
 
@@ -202,13 +228,13 @@ export default function BioAnalyticsPanel({
             const stressStatus = hrvDataRef.current[hrvDataRef.current.length - 1] < 0.3 ? "Relaxed" : "High";
             drawGraph(`Stress: ${stressStatus}`, hrvDataRef.current, graphX, startY + graphH + gap, graphW, graphH, 'rgb(255, 0, 255)', 'bars');
 
-            const pranaStatus = energyLevel > 0.6 ? "High" : "Building";
+            const pranaStatus = energyLevelRef.current > 0.6 ? "High" : "Building";
             drawGraph(`Prana: ${pranaStatus}`, pranaDataRef.current, graphX, startY + (graphH + gap) * 2, graphW, graphH, 'rgb(0, 215, 255)', 'fill');
 
-            const focusStatus = focusScore > 0.6 ? "Sharp" : "Drifting";
+            const focusStatus = focusScoreRef.current > 0.6 ? "Sharp" : "Drifting";
             drawGraph(`Focus: ${focusStatus}`, focusDataRef.current, graphX, startY + (graphH + gap) * 3, graphW, graphH, 'rgb(255, 200, 0)', 'beam');
 
-            drawGraph(`HRV Index: ${hrvIndex} ms`, hrvIndexDataRef.current, graphX, startY + (graphH + gap) * 4, graphW, graphH, 'rgb(200, 255, 200)', 'area');
+            drawGraph(`HRV Index: ${hrvIndexRef.current} ms`, hrvIndexDataRef.current, graphX, startY + (graphH + gap) * 4, graphW, graphH, 'rgb(200, 255, 200)', 'area');
 
             // --- NADI PARIKSHA (Tiny Graphs) ---
             const tgY = startY + (graphH + gap) * 5 + 20;
@@ -238,13 +264,13 @@ export default function BioAnalyticsPanel({
             drawTinyBar("Kapha", kaphaHistoryRef.current, graphX + 240, tgY + 20, 'rgb(0, 255, 0)');
 
             ctx.fillStyle = 'rgba(200, 255, 255, 1)';
-            ctx.fillText(finding, graphX, tgY + 55);
+            ctx.fillText(findingRef.current, graphX, tgY + 55);
 
             // --- ENERGY COHERENCE RADAR ---
             const guideY = tgY + 65;
-            const coherenceY = guideY + 45;
+            const coherenceY = guideY + 55; // Moved down slightly
             const coherenceX = panelW / 2;
-            const radius = 20 + energyLevel * 30;
+            const radius = 20 + energyLevelRef.current * 30;
 
             // Radar Background
             ctx.strokeStyle = '#333';
@@ -266,8 +292,8 @@ export default function BioAnalyticsPanel({
             ctx.closePath();
 
             let cohColor = 'rgba(0, 215, 255, 0.5)'; // Gold
-            if (energyLevel < 0.3) cohColor = 'rgba(0, 0, 255, 0.5)';
-            else if (energyLevel > 0.7) cohColor = 'rgba(255, 0, 255, 0.5)';
+            if (energyLevelRef.current < 0.3) cohColor = 'rgba(0, 0, 255, 0.5)';
+            else if (energyLevelRef.current > 0.7) cohColor = 'rgba(255, 0, 255, 0.5)';
 
             ctx.fillStyle = cohColor;
             ctx.fill();
@@ -275,7 +301,7 @@ export default function BioAnalyticsPanel({
             ctx.stroke();
 
             ctx.fillStyle = '#cccccc';
-            ctx.fillText(`Energy Coherence: ${Math.round(energyLevel * 100)}%`, coherenceX - 60, coherenceY + 60);
+            ctx.fillText(`Energy Coherence: ${Math.round(energyLevelRef.current * 100)}%`, coherenceX - 60, coherenceY + 60);
 
             // --- DATA ANALYSIS BOT ---
             const botY = coherenceY + radius + 30;
@@ -318,16 +344,16 @@ export default function BioAnalyticsPanel({
             ctx.stroke();
 
             // Typing Text
-            if (insightText !== lastInsightTextRef.current) {
+            if (insightTextRef.current !== lastInsightTextRef.current) {
                 typingCharCountRef.current = 0;
-                lastInsightTextRef.current = insightText;
+                lastInsightTextRef.current = insightTextRef.current;
             }
 
-            if (typingCharCountRef.current < insightText.length) {
+            if (typingCharCountRef.current < insightTextRef.current.length) {
                 typingCharCountRef.current += 0.5; // Typing speed
             }
 
-            const currentText = insightText.substring(0, Math.floor(typingCharCountRef.current));
+            const currentText = insightTextRef.current.substring(0, Math.floor(typingCharCountRef.current));
 
             // Text Bubble
             ctx.font = '14px sans-serif';
@@ -352,7 +378,7 @@ export default function BioAnalyticsPanel({
 
         animationFrameRef.current = requestAnimationFrame(animate);
         return () => cancelAnimationFrame(animationFrameRef.current);
-    }, [beatDetected, energyLevel, stressLevel, focusScore, hrvIndex, doshas, insightText, finding]);
+    }, []); // Empty dependency array for stable loop
 
     return (
         <div className="relative w-[480px] h-[720px] bg-[#05080f] border-2 border-[#00d7ff] rounded-lg overflow-hidden shadow-[0_0_30px_rgba(0,215,255,0.3)]">
