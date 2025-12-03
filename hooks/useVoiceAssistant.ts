@@ -36,9 +36,9 @@ export function useVoiceAssistant() {
             utterance.voice = voice;
         }
 
-        utterance.rate = 1.0;
-        utterance.pitch = 1.2; // Slightly higher pitch for "sweet girl voice"
-        utterance.volume = 1.0;
+        utterance.rate = 1.15; // Teez (Fast/Energetic)
+        utterance.pitch = 1.1; // Saaf (Clear/Natural)
+        utterance.volume = 1.0; // Loud (Max Volume)
 
         utterance.onend = () => {
             setIsSpeaking(false);

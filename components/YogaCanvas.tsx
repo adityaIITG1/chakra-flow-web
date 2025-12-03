@@ -106,8 +106,9 @@ export default function YogaCanvas() {
             ) || voices.find(v => v.name.includes("Google हिन्दी")) || voices.find(v => v.name.includes("Female"));
 
             if (voice) utterance.voice = voice;
-            utterance.rate = 1.1; // Energetic (slightly faster)
-            utterance.pitch = 1.2; // Sweet (higher pitch)
+            utterance.rate = 1.15; // Teez (Fast/Energetic)
+            utterance.pitch = 1.1; // Saaf (Clear/Natural)
+            utterance.volume = 1.0; // Loud (Max Volume)
             window.speechSynthesis.speak(utterance);
         }
     };
